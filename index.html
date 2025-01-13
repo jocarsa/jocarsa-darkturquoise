@@ -2,9 +2,12 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Teleprompter Profesional</title>
+    <title>jocarsa | darkturquoise</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="https://jocarsa.com/static/logo/jocarsa | DarkTurquoise.svg" />
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap');
+
         /* Reinicio y Estilos Base */
         * {
             margin: 0;
@@ -13,7 +16,7 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Ubuntu,'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f4f4f4;
             color: #333;
             height: 100vh;
@@ -40,6 +43,15 @@
         header h1 {
             font-size: 1.5em;
             font-weight: 600;
+            display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	justify-content: center;
+	align-items: center;
+	align-content: stretch;
+        }
+        header h1 img{
+        	width:50px;
         }
 
         /* Modal de Configuración */
@@ -155,10 +167,11 @@
             background-color: #000;
             color: #fff;
             display: flex;
-            justify-content: center;
-            align-items: center;
+            justify-content: flex-start; /* Cambiado de center a flex-start */
+            align-items: flex-start; /* Cambiado de center a flex-start */
             padding: 50px;
             z-index: 999;
+            overflow: hidden; /* Asegura que no haya scroll no deseado */
         }
 
         /* Contenedor del Script */
@@ -167,9 +180,10 @@
             font-size: 3em;
             line-height: 1.5;
             max-width: 90%;
-            overflow: hidden;
+            overflow: visible; /* Cambiado de hidden a visible */
             transform: translateY(100vh);
             transition: transform 0.1s linear;
+            /* Inicialmente no reflejado */
         }
 
         /* Visualización de Cuenta Regresiva */
@@ -178,7 +192,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 5em;
+            font-size: 15em;
             color: darkturquoise; /* Cambiado a darkturquoise */
             display: none;
             z-index: 2000;
@@ -225,8 +239,8 @@
 <body>
     <!-- Encabezado Corporativo -->
     <header>
-        <img src="https://via.placeholder.com/150x40?text=Logo" alt="Logotipo de la Empresa">
-        <h1>Teleprompter Corporativo</h1>
+       
+        <h1><img src="https://jocarsa.com/static/logo/jocarsa | White.svg">jocarsa | darkturquoise</h1>
     </header>
 
     <!-- Modal de Configuración -->
@@ -263,8 +277,8 @@
 
             <div class="grupo-control">
                 <span>
-                    <input type="checkbox" id="reversa">
-                    Desplazamiento Reverso
+                    <input type="checkbox" id="reflejarX">
+                    Reflejar en X
                 </span>
             </div>
 
@@ -292,7 +306,7 @@
         const selectTema = document.getElementById('tema');
         const sliderCuentaRegresiva = document.getElementById('cuentaRegresiva');
         const valorCuentaRegresiva = document.getElementById('valorCuentaRegresiva');
-        const checkboxReversa = document.getElementById('reversa');
+        const checkboxReflejarX = document.getElementById('reflejarX'); // Cambiado
         const visualCuentaRegresiva = document.getElementById('visualCuentaRegresiva');
         const botonInicio = document.getElementById('botonInicio');
         const botonParar = document.getElementById('botonParar');
@@ -301,7 +315,7 @@
 
         // Estado de la Aplicación
         let desplazando = false;
-        let reversa = false;
+        let reflejarX = false; // Cambiado
         let velocidad = 50; // pixeles por segundo
         let tamFuente = 24;
         let tiempoCuentaRegresiva = 5;
@@ -309,13 +323,6 @@
         let requestAnimacion;
         let ultimaTimestamp = null;
         let intervaloCuentaRegresiva;
-
-        // Variables para gestos táctiles y mouse
-        let inicioTouchX = null;
-        let inicioTouchY = null;
-        let tiempoInicioTouch = null;
-        let timeoutLongPress;
-        let esLongPress = false;
 
         // Función para cargar configuraciones desde localStorage
         function cargarConfiguraciones() {
@@ -326,7 +333,7 @@
                 tamFuente = configuraciones.tamFuente || 24;
                 tiempoCuentaRegresiva = configuraciones.tiempoCuentaRegresiva || 5;
                 temaSeleccionado = configuraciones.temaSeleccionado || 'negro-blanco';
-                reversa = configuraciones.reversa || false;
+                reflejarX = configuraciones.reflejarX || false; // Cambiado
 
                 // Actualizar controles
                 sliderVelocidad.value = velocidad;
@@ -336,11 +343,14 @@
                 sliderCuentaRegresiva.value = tiempoCuentaRegresiva;
                 valorCuentaRegresiva.textContent = tiempoCuentaRegresiva;
                 selectTema.value = temaSeleccionado;
-                checkboxReversa.checked = reversa;
+                checkboxReflejarX.checked = reflejarX; // Cambiado
 
                 // Aplicar tema y tamaño de fuente
                 aplicarTema();
                 contenedorScript.style.fontSize = tamFuente + 'px';
+
+                // Aplicar reflejo si está activado
+                aplicarReflejarX();
             }
         }
 
@@ -352,7 +362,7 @@
                 tamFuente: tamFuente,
                 tiempoCuentaRegresiva: tiempoCuentaRegresiva,
                 temaSeleccionado: temaSeleccionado,
-                reversa: reversa
+                reflejarX: reflejarX // Cambiado
             };
             localStorage.setItem('configTeleprompter', JSON.stringify(configuraciones));
         }
@@ -383,8 +393,9 @@
             guardarConfiguraciones();
         };
 
-        checkboxReversa.onchange = () => {
-            reversa = checkboxReversa.checked;
+        checkboxReflejarX.onchange = () => { // Cambiado
+            reflejarX = checkboxReflejarX.checked;
+            aplicarReflejarX(); // Aplicar reflejo
             guardarConfiguraciones();
         };
 
@@ -398,6 +409,20 @@
                 document.body.classList.add('modo-oscuro');
                 contenedorScript.style.backgroundColor = '#000';
                 contenedorScript.style.color = '#fff';
+            }
+        }
+
+        // Aplicar Reflejo en X
+        function aplicarReflejarX() {
+            // Extraer la parte de translateY de la transformación actual
+            let currentTransform = contenedorScript.style.transform;
+            const translateYMatch = /translateY\(([-\d.]+)px\)/.exec(currentTransform);
+            const translateY = translateYMatch ? parseFloat(translateYMatch[1]) : 100;
+
+            if (reflejarX) {
+                contenedorScript.style.transform = `translateY(${translateY}px) scaleX(-1)`;
+            } else {
+                contenedorScript.style.transform = `translateY(${translateY}px)`;
             }
         }
 
@@ -479,8 +504,8 @@
         // Iniciar Desplazamiento del Texto
         function iniciarDesplazamiento() {
             contenedorScript.innerHTML = entradaScript.value.replace(/\n/g, '<br>');
-            // Resetear posición según reversa
-            contenedorScript.style.transform = reversa ? 'translateY(-100vh)' : 'translateY(100vh)';
+            // Resetear posición
+            contenedorScript.style.transform = reflejarX ? 'translateY(200vh) scaleX(-1)' : 'translateY(200vh)';
             desplazando = true;
             ultimaTimestamp = null;
             requestAnimacion = requestAnimationFrame(pasoDesplazamiento);
@@ -492,7 +517,7 @@
             cancelAnimationFrame(requestAnimacion);
             botonParar.disabled = true;
             botonInicio.disabled = false;
-            contenedorScript.style.transform = 'translateY(100vh)';
+            contenedorScript.style.transform = reflejarX ? 'translateY(100vh) scaleX(-1)' : 'translateY(100vh)';
         }
 
         // Paso de Animación para Desplazamiento
@@ -501,20 +526,15 @@
             const delta = timestamp - ultimaTimestamp;
             ultimaTimestamp = timestamp;
             let distancia = (velocidad / 1000) * delta;
-            if (reversa) distancia = -distancia;
+            // La dirección de desplazamiento siempre es de abajo hacia arriba
             let posicionActual = obtenerTranslateY(contenedorScript.style.transform);
-            posicionActual += distancia;
-            contenedorScript.style.transform = `translateY(${posicionActual}px)`;
+            posicionActual -= distancia; // Mover hacia arriba
+            contenedorScript.style.transform = `translateY(${posicionActual}px)` + (reflejarX ? ' scaleX(-1)' : '');
 
             // Detener cuando el texto sale de la vista
             const alturaContenedor = contenedorScript.offsetHeight;
             const alturaVentana = window.innerHeight;
-            if (!reversa && posicionActual < -alturaContenedor) {
-                pararDesplazamiento();
-                salirPantallaCompleta();
-                return;
-            }
-            if (reversa && posicionActual > alturaVentana) {
+            if (posicionActual < -alturaContenedor) {
                 pararDesplazamiento();
                 salirPantallaCompleta();
                 return;
@@ -526,19 +546,12 @@
         // Obtener el valor actual de translateY
         function obtenerTranslateY(transform) {
             const match = /translateY\(([-\d.]+)px\)/.exec(transform);
-            return match ? parseFloat(match[1]) : 0;
+            return match ? parseFloat(match[1]) : 800;
         }
 
         // Volver al Inicio del Texto
         function volverInicio() {
-            contenedorScript.style.transform = reversa ? 'translateY(-100vh)' : 'translateY(100vh)';
-        }
-
-        // Alternar Desplazamiento Reverso
-        function alternarReversa() {
-            reversa = !reversa;
-            checkboxReversa.checked = reversa;
-            guardarConfiguraciones();
+            contenedorScript.style.transform = reflejarX ? 'translateY(100vh) scaleX(-1)' : 'translateY(100vh)';
         }
 
         // Ajustar Velocidad
@@ -584,7 +597,7 @@
             return tiposInteractividad.includes(elemento.tagName);
         }
 
-        // Limpiar el código de gestos táctiles y de mouse
+        // Limpieza de gestos táctiles y de mouse
         // Ya que solo queremos que el botón "Iniciar" controle el inicio del teleprompter
 
     </script>
