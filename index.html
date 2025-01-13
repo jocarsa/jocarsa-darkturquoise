@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Teleprompter Profesional</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Reinicio y Estilos Base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Encabezado Corporativo */
+        header {
+            background-color: darkturquoise; /* Cambiado a darkturquoise */
+            color: #ecf0f1;
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        header img {
+            height: 40px;
+            margin-right: 15px;
+        }
+
+        header h1 {
+            font-size: 1.5em;
+            font-weight: 600;
+        }
+
+        /* Modal de Configuración */
+        #modalConfiguracion {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 500px;
+            z-index: 1000;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        /* Clase para ocultar el modal */
+        #modalConfiguracion.oculto {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        #modalConfiguracion h2 {
+            margin-bottom: 20px;
+            text-align: center;
+            color: darkturquoise; /* Cambiado a darkturquoise */
+        }
+
+        #controles {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #controles label {
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            font-weight: 500;
+        }
+
+        #controles textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            resize: vertical;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+            font-family: inherit;
+        }
+
+        #controles input[type="range"],
+        #controles select {
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        #controles input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        #controles .grupo-control {
+            margin-bottom: 20px;
+        }
+
+        #controles .grupo-control span {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        #controles .botones {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #controles button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #botonInicio {
+            background-color: darkturquoise; /* Cambiado a darkturquoise */
+            color: #fff;
+        }
+
+        #botonInicio:hover {
+            background-color: #1aa89c; /* Variante más oscura de darkturquoise */
+        }
+
+        #botonParar {
+            background-color: #c0392b;
+            color: #fff;
+        }
+
+        #botonParar:hover {
+            background-color: #a93226;
+        }
+
+        /* Pantalla Completa del Teleprompter */
+        #pantallaCompleta.teleprompter {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 50px;
+            z-index: 999;
+        }
+
+        /* Contenedor del Script */
+        #contenedorScript {
+            white-space: pre-wrap;
+            font-size: 3em;
+            line-height: 1.5;
+            max-width: 90%;
+            overflow: hidden;
+            transform: translateY(100vh);
+            transition: transform 0.1s linear;
+        }
+
+        /* Visualización de Cuenta Regresiva */
+        #visualCuentaRegresiva {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5em;
+            color: darkturquoise; /* Cambiado a darkturquoise */
+            display: none;
+            z-index: 2000;
+        }
+
+        /* Modo Oscuro */
+        body.modo-oscuro {
+            background-color: #1e1e1e;
+            color: #ecf0f1;
+        }
+
+        body.modo-oscuro #modalConfiguracion {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+        }
+
+        body.modo-oscuro #controles textarea {
+            background-color: #34495e;
+            color: #ecf0f1;
+            border: 1px solid #555;
+        }
+
+        body.modo-oscuro #controles button {
+            color: #fff;
+        }
+
+        /* Diseño Responsivo */
+        @media (max-width: 600px) {
+            #contenedorScript {
+                font-size: 2em;
+                padding: 30px;
+            }
+
+            #pantallaCompleta.teleprompter {
+                padding: 30px;
+            }
+
+            header h1 {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Encabezado Corporativo -->
+    <header>
+        <img src="https://via.placeholder.com/150x40?text=Logo" alt="Logotipo de la Empresa">
+        <h1>Teleprompter Corporativo</h1>
+    </header>
+
+    <!-- Modal de Configuración -->
+    <div id="modalConfiguracion">
+        <h2>Configuración del Teleprompter</h2>
+        <div id="controles">
+            <div class="grupo-control">
+                <label for="entradaScript">Texto:</label>
+                <textarea id="entradaScript" placeholder="Ingresa tu guion aquí..."></textarea>
+            </div>
+
+            <div class="grupo-control">
+                <span>Velocidad: <span id="valorVelocidad">50</span> px/s</span>
+                <input type="range" id="velocidad" min="10" max="200" value="50">
+            </div>
+
+            <div class="grupo-control">
+                <span>Tamaño de Fuente: <span id="valorTamFuente">24</span> px</span>
+                <input type="range" id="tamFuente" min="16" max="72" value="24">
+            </div>
+
+            <div class="grupo-control">
+                <span>Fondo/Text:</span>
+                <select id="tema">
+                    <option value="negro-blanco">Negro sobre Blanco</option>
+                    <option value="blanco-negro">Blanco sobre Negro</option>
+                </select>
+            </div>
+
+            <div class="grupo-control">
+                <span>Cuenta Regresiva: <span id="valorCuentaRegresiva">5</span> s</span>
+                <input type="range" id="cuentaRegresiva" min="0" max="20" value="5">
+            </div>
+
+            <div class="grupo-control">
+                <span>
+                    <input type="checkbox" id="reversa">
+                    Desplazamiento Reverso
+                </span>
+            </div>
+
+            <div class="botones">
+                <button id="botonInicio">Iniciar</button>
+                <button id="botonParar" disabled>Parar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visualización de Cuenta Regresiva -->
+    <div id="visualCuentaRegresiva">5</div>
+
+    <!-- Contenedor del Script -->
+    <div id="contenedorScript"></div>
+
+    <script>
+        // Elementos del DOM
+        const entradaScript = document.getElementById('entradaScript');
+        const contenedorScript = document.getElementById('contenedorScript');
+        const sliderVelocidad = document.getElementById('velocidad');
+        const valorVelocidad = document.getElementById('valorVelocidad');
+        const sliderTamFuente = document.getElementById('tamFuente');
+        const valorTamFuente = document.getElementById('valorTamFuente');
+        const selectTema = document.getElementById('tema');
+        const sliderCuentaRegresiva = document.getElementById('cuentaRegresiva');
+        const valorCuentaRegresiva = document.getElementById('valorCuentaRegresiva');
+        const checkboxReversa = document.getElementById('reversa');
+        const visualCuentaRegresiva = document.getElementById('visualCuentaRegresiva');
+        const botonInicio = document.getElementById('botonInicio');
+        const botonParar = document.getElementById('botonParar');
+        const modalConfiguracion = document.getElementById('modalConfiguracion');
+        const encabezado = document.querySelector('header');
+
+        // Estado de la Aplicación
+        let desplazando = false;
+        let reversa = false;
+        let velocidad = 50; // pixeles por segundo
+        let tamFuente = 24;
+        let tiempoCuentaRegresiva = 5;
+        let temaSeleccionado = 'negro-blanco';
+        let requestAnimacion;
+        let ultimaTimestamp = null;
+        let intervaloCuentaRegresiva;
+
+        // Variables para gestos táctiles y mouse
+        let inicioTouchX = null;
+        let inicioTouchY = null;
+        let tiempoInicioTouch = null;
+        let timeoutLongPress;
+        let esLongPress = false;
+
+        // Función para cargar configuraciones desde localStorage
+        function cargarConfiguraciones() {
+            const configuraciones = JSON.parse(localStorage.getItem('configTeleprompter'));
+            if (configuraciones) {
+                entradaScript.value = configuraciones.entradaScript || '';
+                velocidad = configuraciones.velocidad || 50;
+                tamFuente = configuraciones.tamFuente || 24;
+                tiempoCuentaRegresiva = configuraciones.tiempoCuentaRegresiva || 5;
+                temaSeleccionado = configuraciones.temaSeleccionado || 'negro-blanco';
+                reversa = configuraciones.reversa || false;
+
+                // Actualizar controles
+                sliderVelocidad.value = velocidad;
+                valorVelocidad.textContent = velocidad;
+                sliderTamFuente.value = tamFuente;
+                valorTamFuente.textContent = tamFuente;
+                sliderCuentaRegresiva.value = tiempoCuentaRegresiva;
+                valorCuentaRegresiva.textContent = tiempoCuentaRegresiva;
+                selectTema.value = temaSeleccionado;
+                checkboxReversa.checked = reversa;
+
+                // Aplicar tema y tamaño de fuente
+                aplicarTema();
+                contenedorScript.style.fontSize = tamFuente + 'px';
+            }
+        }
+
+        // Función para guardar configuraciones en localStorage
+        function guardarConfiguraciones() {
+            const configuraciones = {
+                entradaScript: entradaScript.value,
+                velocidad: velocidad,
+                tamFuente: tamFuente,
+                tiempoCuentaRegresiva: tiempoCuentaRegresiva,
+                temaSeleccionado: temaSeleccionado,
+                reversa: reversa
+            };
+            localStorage.setItem('configTeleprompter', JSON.stringify(configuraciones));
+        }
+
+        // Actualizar valores mostrados y guardar en localStorage
+        sliderVelocidad.oninput = () => {
+            velocidad = parseInt(sliderVelocidad.value);
+            valorVelocidad.textContent = velocidad;
+            guardarConfiguraciones();
+        };
+
+        sliderTamFuente.oninput = () => {
+            tamFuente = parseInt(sliderTamFuente.value);
+            valorTamFuente.textContent = tamFuente;
+            contenedorScript.style.fontSize = tamFuente + 'px';
+            guardarConfiguraciones();
+        };
+
+        sliderCuentaRegresiva.oninput = () => {
+            tiempoCuentaRegresiva = parseInt(sliderCuentaRegresiva.value);
+            valorCuentaRegresiva.textContent = tiempoCuentaRegresiva;
+            guardarConfiguraciones();
+        };
+
+        selectTema.onchange = () => {
+            temaSeleccionado = selectTema.value;
+            aplicarTema();
+            guardarConfiguraciones();
+        };
+
+        checkboxReversa.onchange = () => {
+            reversa = checkboxReversa.checked;
+            guardarConfiguraciones();
+        };
+
+        // Aplicar Tema Seleccionado
+        function aplicarTema() {
+            if (temaSeleccionado === 'negro-blanco') {
+                document.body.classList.remove('modo-oscuro');
+                contenedorScript.style.backgroundColor = '';
+                contenedorScript.style.color = '';
+            } else {
+                document.body.classList.add('modo-oscuro');
+                contenedorScript.style.backgroundColor = '#000';
+                contenedorScript.style.color = '#fff';
+            }
+        }
+
+        // Inicializar Configuraciones desde localStorage
+        cargarConfiguraciones();
+
+        // Iniciar Teleprompter con Cuenta Regresiva
+        botonInicio.addEventListener('click', () => {
+            if (desplazando) return;
+            if (!entradaScript.value.trim()) {
+                alert('Por favor, ingresa el texto del guion.');
+                return;
+            }
+            botonInicio.disabled = true;
+            botonParar.disabled = false;
+            modalConfiguracion.classList.add('oculto'); // Ocultar configuración
+            iniciarCuentaRegresiva().then(() => {
+                entrarPantallaCompleta();
+                iniciarDesplazamiento();
+            });
+        });
+
+        // Parar Teleprompter
+        botonParar.addEventListener('click', () => {
+            pararDesplazamiento();
+            salirPantallaCompleta();
+        });
+
+        // Función de Cuenta Regresiva
+        function iniciarCuentaRegresiva() {
+            return new Promise((resolve) => {
+                if (tiempoCuentaRegresiva > 0) {
+                    visualCuentaRegresiva.textContent = tiempoCuentaRegresiva;
+                    visualCuentaRegresiva.style.display = 'block';
+                    let actual = tiempoCuentaRegresiva;
+                    intervaloCuentaRegresiva = setInterval(() => {
+                        actual--;
+                        if (actual <= 0) {
+                            clearInterval(intervaloCuentaRegresiva);
+                            visualCuentaRegresiva.style.display = 'none';
+                            resolve();
+                        } else {
+                            visualCuentaRegresiva.textContent = actual;
+                        }
+                    }, 1000);
+                } else {
+                    resolve();
+                }
+            });
+        }
+
+        // Entrar en Modo Pantalla Completa
+        function entrarPantallaCompleta() {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.warn(`Error al intentar activar pantalla completa: ${err.message}`);
+            });
+            document.body.classList.add('pantallaCompleta');
+        }
+
+        // Salir de Modo Pantalla Completa
+        function salirPantallaCompleta() {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+            document.body.classList.remove('pantallaCompleta');
+            botonInicio.disabled = false;
+            botonParar.disabled = true;
+            modalConfiguracion.classList.remove('oculto'); // Mostrar configuración
+        }
+
+        // Manejar la tecla Escape para salir del teleprompter
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && desplazando) {
+                pararDesplazamiento();
+                salirPantallaCompleta();
+            }
+        });
+
+        // Iniciar Desplazamiento del Texto
+        function iniciarDesplazamiento() {
+            contenedorScript.innerHTML = entradaScript.value.replace(/\n/g, '<br>');
+            // Resetear posición según reversa
+            contenedorScript.style.transform = reversa ? 'translateY(-100vh)' : 'translateY(100vh)';
+            desplazando = true;
+            ultimaTimestamp = null;
+            requestAnimacion = requestAnimationFrame(pasoDesplazamiento);
+        }
+
+        // Parar Desplazamiento del Texto
+        function pararDesplazamiento() {
+            desplazando = false;
+            cancelAnimationFrame(requestAnimacion);
+            botonParar.disabled = true;
+            botonInicio.disabled = false;
+            contenedorScript.style.transform = 'translateY(100vh)';
+        }
+
+        // Paso de Animación para Desplazamiento
+        function pasoDesplazamiento(timestamp) {
+            if (!ultimaTimestamp) ultimaTimestamp = timestamp;
+            const delta = timestamp - ultimaTimestamp;
+            ultimaTimestamp = timestamp;
+            let distancia = (velocidad / 1000) * delta;
+            if (reversa) distancia = -distancia;
+            let posicionActual = obtenerTranslateY(contenedorScript.style.transform);
+            posicionActual += distancia;
+            contenedorScript.style.transform = `translateY(${posicionActual}px)`;
+
+            // Detener cuando el texto sale de la vista
+            const alturaContenedor = contenedorScript.offsetHeight;
+            const alturaVentana = window.innerHeight;
+            if (!reversa && posicionActual < -alturaContenedor) {
+                pararDesplazamiento();
+                salirPantallaCompleta();
+                return;
+            }
+            if (reversa && posicionActual > alturaVentana) {
+                pararDesplazamiento();
+                salirPantallaCompleta();
+                return;
+            }
+
+            requestAnimacion = requestAnimationFrame(pasoDesplazamiento);
+        }
+
+        // Obtener el valor actual de translateY
+        function obtenerTranslateY(transform) {
+            const match = /translateY\(([-\d.]+)px\)/.exec(transform);
+            return match ? parseFloat(match[1]) : 0;
+        }
+
+        // Volver al Inicio del Texto
+        function volverInicio() {
+            contenedorScript.style.transform = reversa ? 'translateY(-100vh)' : 'translateY(100vh)';
+        }
+
+        // Alternar Desplazamiento Reverso
+        function alternarReversa() {
+            reversa = !reversa;
+            checkboxReversa.checked = reversa;
+            guardarConfiguraciones();
+        }
+
+        // Ajustar Velocidad
+        function ajustarVelocidad(delta) {
+            velocidad = Math.min(Math.max(velocidad + delta, 10), 200);
+            sliderVelocidad.value = velocidad;
+            valorVelocidad.textContent = velocidad;
+            guardarConfiguraciones();
+        }
+
+        // Manejo de Eventos de Teclado
+        document.addEventListener('keydown', (e) => {
+            // Deshabilitar atajos durante la configuración
+            if (!desplazando) return;
+            switch (e.key) {
+                case 'ArrowUp':
+                    e.preventDefault();
+                    ajustarVelocidad(10);
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    ajustarVelocidad(-10);
+                    break;
+                default:
+                    break;
+            }
+        });
+
+        // Controles de Gestos Táctiles y Mouse
+        const areaGestos = document.body;
+
+        // Se eliminan todos los manejadores de gestos para que solo el botón "Iniciar" pueda iniciar el teleprompter
+
+        // Prevenir Menú Contextual en Long Press
+        areaGestos.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        // Inicializar Posición del Script
+        volverInicio();
+
+        // Función para Verificar si el Elemento es Interactivo
+        function esElementoInteractivo(elemento) {
+            const tiposInteractividad = ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'LABEL'];
+            return tiposInteractividad.includes(elemento.tagName);
+        }
+
+        // Limpiar el código de gestos táctiles y de mouse
+        // Ya que solo queremos que el botón "Iniciar" controle el inicio del teleprompter
+
+    </script>
+</body>
+</html>
+
